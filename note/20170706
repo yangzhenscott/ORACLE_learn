@@ -1,0 +1,121 @@
+2017/7/5
+
+**创建表空间  物理空间  存放表**
+
+## create tablespace ts1 datfile 'C:\ts.dbf' size 50M
+
+##创建表##  
+表空间：USERS
+所有者 ： SCOTT
+查询表：  SCOTT.t1
+----------------------------------
+表空间：USERS
+所有者 ： SYS
+查询表：  t2       //直接查询，所有人都可看见
+
+查看scott用户在USERS表空间之下
+## select * from DBA_USERS
+
+dual是sys用户下的虚表
+作用，日期  计算
+## select sysdate from dual
+## select sysdate from dual for update
+
+**序列**
+作用：生成唯一主键
+
+create sequence sq1
+insert into A1 values(seq1.nextval,'3333333')
+提交事务  -----》  query data
+
+为什么会报序列不存在？
+select SYS.seq1.nextval from dual
+
+2017/7/6
+
+1.
+## select count(1),avg(sal),empno  from emp t where sal >= (select avg(sal) from emp) group by empno
+解释：根据empno进行分组，在查询语句中只可以出现这个字段，以及其他聚合函数
+
+2.
+##  select c,to_char(wm_concat(a)) from T1 t where c is not null   group by c order by c desc
+执行按照顺序，where --》 group分组--》having --》wm_concat同组连接 用逗号分隔 --》 order by排序
+
+3.
+to_char(wm_concat(a || ':'|| b))
+is not null
+
+4.
+注意：group by 比order by先执行，order by不会对group by 内部进行排序，如果group by后只有一条记录，那么order by 将无效。
+要查出group by中最大的或最小的某一字段使用 max或min函数。
+例：
+select sum(click_num) as totalnum,max(update_time) as update_time,count(*) as totalarticle from article_detail
+where userid =1 group by userid order by update_time desc
+
+-----------------------------
+#4#select c,to_char(wm_concat(a || ':'|| b)),max(a) from T1 t where c is not null   group by c order by c desc
+
+5.
+order by a     a字段必须出现在select查询字段中，根据结果进行排序。
+
+
+
+
+补：#4#的查询结果：
+prompt Importing table T1...
+set feedback off
+set define off
+insert into T1 (C, TO_CHAR(WM_CONCAT(A||':'||B)), MAX(A))
+values ('4', '4:27-7月 -17', 4);
+
+insert into T1 (C, TO_CHAR(WM_CONCAT(A||':'||B)), MAX(A))
+values ('3', '8:29-7月 -17,9:27-7月 -17', 9);
+
+insert into T1 (C, TO_CHAR(WM_CONCAT(A||':'||B)), MAX(A))
+values ('22222', '2:06-7月 -17', 2);
+
+prompt Done.
+
+
+6.distinct a,b  根据a字段进行独一无二的选择过滤
+
+7.to_date('20170908','yyyymmdd')  直接可以转换成date类型参数进行比较
+
+8.select a from T1 t
+union
+select a from T2
+去掉重复值，前提是字段名以及类型都需要对应上
+
+union all  不去重
+interset  交集
+minus  差集
+
+9.连接查询
+inner join   内连接
+left join  左外连接
+
+10.
+##oracle日期处理函数##    (SQL中不区分大小写)
+select   sysdate,to_char(sysdate,'yyyy-mm-dd   hh24:mi:ss')   from   dual    //24小时
+select   sysdate,to_char(sysdate,'yyyy-mm-dd   hh:mi:ss')   from   dual      //12小时
+
+##日期时间间隔操作##   
+当前时间减去7分钟的时间   
+select sysdate,sysdate - interval '7' MINUTE FROM dual;  
+当前时间减去7小时的时间   
+select sysdate,sysdate - interval '7' HOUR FROM dual;   
+当前时间减去7天的时间   
+select sysdate,sysdate - interval '7' DAY FROM dual;   
+当前时间减去7月的时间   
+select sysdate,sysdate - interval '7' MONTH FROM dual;   
+当前时间减去7年的时间   
+select sysdate,sysdate - interval '7' YEAR FROM dual;  
+
+11.比较一下有何异同：
+select to_date('20170403','yyyy-mm-dd') from dual
+2017/4/3
+
+select to_char(sysdate,'yyyy-mm:dd') from dual
+2017-07:06
+
+结论：保存到数据库中的字符串会按照pattern格式存储，而date类型参数有自己的展示格式：2019/09/09,不论你以什么样的pattern进行格式
